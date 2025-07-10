@@ -1,0 +1,120 @@
+.service-box {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.service-animate {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.service-box:nth-child(1) {
+  transition-delay: 0.1s;
+}
+
+.service-box:nth-child(2) {
+  transition-delay: 0.2s;
+}
+
+.service-box:nth-child(3) {
+  transition-delay: 0.3s;
+}
+
+.service-box:nth-child(4) {
+  transition-delay: 0.4s;
+}
+
+/* Card container effects */
+.service-box {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: scale(1);
+}
+
+.service-box:hover {
+  transform: scale(1.02);
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.2),
+    0 8px 10px -6px rgb(0 0 0 / 0.2);
+}
+
+/* Image and overlay effects */
+.service-box .image-container {
+  overflow: hidden;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.service-box img {
+  transform: scale(1.01);
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  backface-visibility: hidden;
+  -webkit-font-smoothing: subpixel-antialiased;
+}
+
+.service-box:hover img {
+  transform: scale(1.15);
+}
+
+.service-box .overlay {
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.2) 20%,
+    rgba(0, 0, 0, 0.8) 100%
+  );
+  opacity: 0.85;
+  transition: opacity 0.3s ease;
+}
+
+.service-box:hover .overlay {
+  opacity: 0.95;
+}
+
+/* Content animation */
+.service-box .content {
+  transform: translateY(10px);
+  opacity: 0.9;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.service-box:hover .content {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Stats and description fade in */
+.service-box .description {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition-delay: 0.05s;
+}
+
+.service-box:hover .description {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Button effects */
+.service-box .btn {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.service-box .btn:hover {
+  background: #f15e22;
+  border-color: #f15e22;
+  transform: translateY(-2px);
+  cursor: pointer;
+}
+
+@media screen and (max-width: 640px) {
+  .service-box .description {
+    opacity: 1;
+    transform: none;
+  }
+}

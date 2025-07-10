@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme {
+  /* Colors */
+  --color-vr-light-gray: rgb(249, 249, 249);
+  --color-vr-light-gray-blur: rgb(0, 0, 0, 0.65);
+  --color-input-color: #383838;
+  --color-light-dark: rgb(153, 153, 153);
+  --color-dark: rgb(51, 51, 51);
+  --color-main-color: #f15e22;
+
+  /* Fonts */
+  --font-heading: "Sofia Pro Regular", sans-serif;
+  --font-heading-bold: "Sofia Pro Bold", sans-serif;
+  --font-heading-test: "Space Grotesk", sans-serif;
+  --font-europa-regular: "Europa Regular", system-ui, Avenir, Helvetica, Arial,
+    sans-serif;
+  --font-europa-light: "Europa Light", system-ui, Avenir, Helvetica, Arial,
+    sans-serif;
+  --font-roboto: "Roboto", system-ui, Avenir, Helvetica, Arial, sans-serif;
+
+  /* Font Sizes */
+  --text-10: 10px;
+  --text-11: 11px;
+  --text-12: 12px;
+  --text-13: 13px;
+  --text-15: 15px;
+  --text-17: 17px;
+  --text-19: 19px;
+  --text-28: 28px;
+
+  /* Font Weights */
+  --font-weight-400: 400;
+  --font-weight-500: 500;
+  --font-weight-600: 600;
+  --font-weight-700: 700;
+
+  /* Widths */
+  --width-1286: 1286px;
+
+  /* Screen Sizes */
+  --screen-ssm: 425px;
+}

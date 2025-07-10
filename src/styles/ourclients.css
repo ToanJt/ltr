@@ -1,0 +1,30 @@
+.slider-container img {
+  object-fit: contain;
+  width: 100%;
+  height: 86px;
+}
+.w-max {
+  gap: 86px !important;
+}
+@media (max-width: 1290px) {
+  .slider-container img {
+    height: 68px;
+  }
+  .w-max {
+    gap: 68px !important;
+  }
+}
+@media (max-width: 768px) {
+  .w-max {
+    gap: 38px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .slider-container img {
+    height: 56px;
+  }
+  .w-max {
+    gap: 16px !important;
+  }
+}

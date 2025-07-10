@@ -1,0 +1,21 @@
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://ltrstudio.com/sitemap.xml
+
+# Prevent crawling of admin areas
+Disallow: /admin/
+Disallow: /private/
+Disallow: /api/
+
+# Allow crawling of important content
+Allow: /projects/
+Allow: /about/
+Allow: /contact/
+Allow: /services/
+Allow: /portfolio/
+
+# Crawl-delay directive
+Crawl-delay: 10 

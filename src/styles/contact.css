@@ -1,0 +1,75 @@
+.formBox {
+  box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+}
+
+@media only screen and (max-width: 980px) {
+  .light-bulb {
+    object-position: -220px;
+  }
+}
+
+@media only screen and (max-width: 935px) {
+  .light-bulb {
+    object-position: -240px;
+  }
+}
+
+@media only screen and (max-width: 900px) {
+  .light-bulb {
+    object-position: -260px;
+  }
+}
+
+@media only screen and (max-width: 850px) {
+  .light-bulb {
+    object-position: -280px;
+  }
+}
+
+@media only screen and (max-width: 810px) {
+  .light-bulb {
+    object-position: -310px;
+  }
+}
+
+@media only screen and (max-width: 768px) {
+  .light-bulb {
+    object-position: -180px;
+  }
+}
+
+@media only screen and (max-width: 700px) {
+  .light-bulb {
+    object-position: -210px;
+  }
+}
+
+@media only screen and (max-width: 660px) {
+  .light-bulb {
+    object-position: -230px;
+  }
+}
+
+@media only screen and (max-width: 640px) {
+  .light-bulb {
+    object-position: -360px;
+  }
+}
+
+@media only screen and (max-width: 580px) {
+  .light-bulb {
+    object-position: -400px;
+  }
+}
+
+@media only screen and (max-width: 500px) {
+  .light-bulb {
+    object-position: -450px;
+  }
+}
+
+@media only screen and (max-width: 450px) {
+  .light-bulb {
+    object-position: -450px;
+  }
+}

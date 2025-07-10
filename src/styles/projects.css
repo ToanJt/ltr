@@ -1,0 +1,101 @@
+.error {
+  border: 2px solid red;
+}
+
+.error-message {
+  color: red;
+}
+
+.card-project:hover {
+  transform: translateY(-8px);
+}
+
+.card-project:hover img {
+  transform: scale(1.1);
+}
+
+.project-description {
+  opacity: 0;
+}
+
+.project-image:hover .project-description {
+  opacity: 1;
+}
+
+.project-image:hover img {
+  transform: scale(1.1);
+}
+
+.activeOption {
+  color: black !important;
+}
+
+.filter-option {
+  position: relative;
+  color: #727272;
+  cursor: pointer;
+  padding: 3px 0;
+  transition: all 0.3s ease;
+}
+
+.filter-option::after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  bottom: -2px;
+  left: 0;
+  background-color: black;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+}
+
+.filter-option:hover {
+  color: black;
+}
+
+.filter-option:hover::after {
+  transform: scaleX(1);
+}
+
+.filter-option.active {
+  color: black;
+}
+
+.filter-option.active::after {
+  transform: scaleX(1);
+}
+
+li {
+  position: relative;
+  color: #727272;
+  cursor: pointer;
+  padding: 3px 0;
+  transition: color 0.3s ease;
+}
+
+li::after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 1px;
+  bottom: -2px;
+  left: 0;
+  background-color: black;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+}
+
+li:hover {
+  color: black;
+}
+
+li:hover::after {
+  transform: scaleX(1);
+}
+
+li.activeOption::after {
+  transform: scaleX(1);
+}

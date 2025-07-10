@@ -1,0 +1,239 @@
+.yarl__slide_description {
+  color: white !important;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: "Europa Light", system-ui, Avenir, Helvetica, Arial;
+  font-size: 1.5rem;
+  background: rgba(0, 0, 0, 0) !important;
+}
+
+.yarl__flex_center {
+  background: rgba(0, 0, 0, 0) !important;
+}
+
+.yarl__carouselm,
+.yarl__carousel_with_slides {
+  background-color: rgba(0, 0, 0, 0.65) !important;
+}
+.yarl__thumbnails_container {
+  backdrop-filter: blur(10px);
+}
+.yarl__thumbnails_vignette {
+  background: rgba(0, 0, 0, 0.65) !important;
+}
+.yarl__thumbnails_track {
+  z-index: 10;
+}
+.yarl__thumbnails_thumbnail {
+  padding: 0 !important;
+  border-color: gray !important;
+}
+.yarl__thumbnails_thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.yarl__slide_image {
+  width: 90% !important;
+  height: 90% !important;
+}
+
+/* Gallery container */
+.react-photo-album {
+  opacity: 0;
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+/* Image container */
+.react-photo-album--photo {
+  border-radius: 12px;
+  overflow: hidden;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.react-photo-album--photo:hover {
+  transform: scale(1.02) !important;
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1),
+    0 8px 10px -6px rgb(0 0 0 / 0.1);
+  z-index: 1;
+}
+
+/* Image */
+.react-photo-album--photo img {
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.react-photo-album--photo:hover img {
+  transform: scale(1.1);
+}
+
+/* Lightbox customization */
+.yarl__container {
+  background-color: rgba(0, 0, 0, 0) !important;
+  opacity: 0;
+  animation: lightboxFadeIn 0.3s ease-out forwards;
+}
+
+/* Lightbox animations */
+.yarl__root {
+  --yarl-animation-duration: 400ms !important;
+  --yarl-fade-enter-duration: 400ms !important;
+  --yarl-fade-exit-duration: 400ms !important;
+}
+
+.yarl__slide_image {
+  animation: slideZoomIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+.yarl__slide {
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Liquid Glass Button Effect */
+.yarl__button {
+  background: rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 8px !important;
+  padding: 12px !important;
+  margin: 0 8px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  overflow: hidden !important;
+  opacity: 0;
+  animation: fadeIn 0.4s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+.yarl__button::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: -100% !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  ) !important;
+  transition: 0.6s !important;
+}
+
+.yarl__button:hover::before {
+  left: 100% !important;
+}
+
+/* Counter with glass effect */
+.yarl__counter {
+  background: rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  padding: 8px 16px !important;
+  border-radius: 8px !important;
+  font-family: "Europa Light", sans-serif !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  opacity: 0;
+  animation: fadeIn 0.4s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+/* Thumbnails animation */
+.yarl__thumbnails_track {
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.yarl__thumbnails_thumbnail {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  opacity: 0;
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.yarl__thumbnails_thumbnail:hover {
+  transform: scale(1.02);
+}
+
+/* Animation keyframes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes lightboxFadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(10px);
+  }
+}
+
+@keyframes slideZoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Loading spinner */
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: var(--main-color);
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Button shimmer animation */
+@keyframes shimmer {
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 1.5s infinite;
+}
+
+/* Button shine animation */
+@keyframes shine {
+  0% {
+    left: -100%;
+  }
+  50%,
+  100% {
+    left: 100%;
+  }
+}
+
+.animate-shine {
+  animation: shine 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}

@@ -1,0 +1,7 @@
+.copyLink div {
+  opacity: 0;
+}
+
+.copyLink:hover div {
+  opacity: 1;
+}
