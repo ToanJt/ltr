@@ -3,7 +3,7 @@ User-agent: *
 Allow: /
 
 # Sitemap location
-Sitemap: https://ltrstudio.com/sitemap.xml
+Sitemap: https://ltrvisuals.com/sitemap.xml
 
 # Prevent crawling of admin areas
 Disallow: /admin/

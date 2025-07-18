@@ -1,5 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import type { LoadableComponent } from "../../functions/interface";
 import "../../styles/services.css";
 
 interface Service {
@@ -13,9 +14,17 @@ interface Service {
   };
 }
 
-const Services = () => {
+const Services = ({ onLoad }: LoadableComponent) => {
   const navigate = useNavigate();
-  const servicesRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Add a small delay to ensure all assets are loaded
+    const timer = setTimeout(() => {
+      onLoad?.();
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [onLoad]);
 
   const services: Service[] = [
     {
@@ -86,10 +95,7 @@ const Services = () => {
 
   return (
     <section className="bg-vr-light-gray lg:pt-24 pt-16 pb-24 overflow-hidden">
-      <section
-        className="container 2xl:w-[1800px] w-full mx-auto"
-        ref={servicesRef}
-      >
+      <section className="container w-full mx-auto">
         <div className="h-full lg:px-16 px-8 mx-0 grid-cols-1 md:gap-10 gap-6">
           <div className="flex flex-col items-center lg:mb-16 mb-12">
             <p className="uppercase sofia-pro text-15 text-gray-600 tracking-widest sm:mb-5 mb-2">

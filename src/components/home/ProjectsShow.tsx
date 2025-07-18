@@ -23,70 +23,99 @@ import Counter from "yet-another-react-lightbox/plugins/counter";
 import "yet-another-react-lightbox/plugins/counter.css";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
 
-const ProjectsShow = () => {
+import type { LoadableComponent } from "../../functions/interface";
+
+interface PhotoType {
+  src: string;
+  width: number;
+  height: number;
+  key: string;
+  title: string;
+  description: string;
+  alt: string;
+}
+
+const ProjectsShow = ({ onLoad }: LoadableComponent) => {
   const [projects, setProjects] = useState<ImageData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const PROJECT_LIMIT = 21;
 
-  const getProjectsDb = async () => {
-    try {
-      const projectsDb = await getDocs(collection(db, "projects"));
-      const projectsData: ImageData[] = [];
-      projectsDb.forEach((doc) => {
-        if (projectsData.length < PROJECT_LIMIT) {
-          const docData = convertToImageData(doc.data());
-          projectsData.push(docData);
-        }
-      });
-      await loadImageDimensions(projectsData);
-    } catch (error) {
-      console.error("Error fetching projects:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Load image dimensions
+  const loadImageDimensions = async (
+    imageData: ImageData
+  ): Promise<ImageData> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.src = imageData.thumbnailURL;
 
-  const loadImageDimensions = async (imageArray: ImageData[]) => {
-    const updatedImages = await Promise.all(
-      imageArray.slice(0, PROJECT_LIMIT).map((image) => {
-        return new Promise<ImageData>((resolve) => {
-          const img = new Image();
-          img.src = image.largeURL;
-
-          img.onload = () => {
-            resolve({
-              ...image,
-              widthOrigin: img.width,
-              heightOrigin: img.height,
-            });
-          };
-
-          img.onerror = () => {
-            resolve({
-              ...image,
-              widthOrigin: 800,
-              heightOrigin: 600,
-            });
-          };
+      img.onload = () => {
+        resolve({
+          ...imageData,
+          widthOrigin: img.width,
+          heightOrigin: img.height,
         });
-      })
-    );
+      };
 
-    setProjects(updatedImages);
+      img.onerror = () => {
+        // Use default dimensions if image fails to load
+        resolve({
+          ...imageData,
+          widthOrigin: 800,
+          heightOrigin: 600,
+        });
+      };
+    });
   };
 
   useEffect(() => {
+    const getProjectsDb = async () => {
+      try {
+        const projectsDb = await getDocs(collection(db, "projects"));
+        const projectsData: ImageData[] = [];
+
+        // Get first PROJECT_LIMIT projects
+        projectsDb.forEach((doc) => {
+          if (projectsData.length < PROJECT_LIMIT) {
+            const docData = convertToImageData(doc.data());
+            projectsData.push({
+              id: doc.id,
+              ...docData,
+            });
+          }
+        });
+
+        // Load dimensions for all images
+        const projectsWithDimensions = await Promise.all(
+          projectsData.map(loadImageDimensions)
+        );
+
+        setProjects(projectsWithDimensions);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching projects:", error);
+        setIsLoading(false);
+      }
+    };
+
     getProjectsDb();
   }, []);
 
-  const photos = projects.map((item) => ({
-    src: item.thumbnailURL,
+  // Call onLoad only when data is loaded
+  useEffect(() => {
+    if (!isLoading && onLoad) {
+      onLoad();
+    }
+  }, [isLoading, onLoad]);
+
+  const photos: PhotoType[] = projects.map((item) => ({
+    src: item.thumbnailURL || item.largeURL,
     width: item.widthOrigin || 800,
     height: item.heightOrigin || 600,
-    key: item.name,
+    key: item.id || item.name,
+    title: item.name,
     description: item.name || item.name,
-    alt: item.description || item.name,
+    alt: item.name || item.name,
   }));
 
   const [index, setIndex] = useState(-1);

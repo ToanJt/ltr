@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import slugify from "slugify";
 import { onTop, convertToImageData } from "../functions/functions";
@@ -7,13 +7,30 @@ import type { ImageData } from "../functions/interface";
 import { db } from "../config/firebaseConfig";
 import { getDocs, collection, doc, setDoc } from "firebase/firestore";
 
-import "react-photo-album/masonry.css";
 import "../styles/gallery.css";
 
 const BATCH_SIZE = 12; // Number of images to load per batch
 
+interface PhotoType {
+  src: string;
+  width: number;
+  height: number;
+  key: string;
+  title: string;
+  description: string;
+  alt: string;
+}
+
+interface ContainerProps {
+  photo: PhotoType;
+  containerRef: React.RefObject<HTMLDivElement>;
+  containerStyle: React.CSSProperties;
+  imageProps: React.ImgHTMLAttributes<HTMLImageElement>;
+}
+
 const Projects = () => {
   const { type } = useParams();
+  const navigate = useNavigate();
   const [allProjects, setAllProjects] = useState<ImageData[]>([]);
   const [displayedProjects, setDisplayedProjects] = useState<ImageData[]>([]);
   const [filteredProjects, setFilteredProjects] = useState<ImageData[]>([]);
@@ -34,9 +51,33 @@ const Projects = () => {
   const [loading, setLoading] = useState(false);
   const [filterLoading, setFilterLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const projectsCache = useRef<Map<string, ImageData>>(new Map());
-  const filteredCache = useRef<Map<string, ImageData[]>>(new Map());
-  const observer = useRef<IntersectionObserver | null>(null);
+
+  // Load image dimensions
+  const loadImageDimensions = async (
+    imageData: ImageData
+  ): Promise<ImageData> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.src = imageData.thumbnailURL;
+
+      img.onload = () => {
+        resolve({
+          ...imageData,
+          widthOrigin: img.width,
+          heightOrigin: img.height,
+        });
+      };
+
+      img.onerror = () => {
+        // Use default dimensions if image fails to load
+        resolve({
+          ...imageData,
+          widthOrigin: 800,
+          heightOrigin: 600,
+        });
+      };
+    });
+  };
 
   const validateEmail = (email: string) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -64,64 +105,6 @@ const Projects = () => {
     }
   };
 
-  const loadImageDimensions = async (imageArray: ImageData[]) => {
-    const updatedImages = await Promise.all(
-      imageArray.map((image) => {
-        return new Promise<ImageData>((resolve) => {
-          const cachedImage = projectsCache.current.get(image.thumbnailURL);
-          if (cachedImage) {
-            resolve(cachedImage);
-            return;
-          }
-
-          const img = new Image();
-          img.src = image.thumbnailURL;
-
-          const imageElement = document.querySelector(
-            `[data-image-url="${image.thumbnailURL}"]`
-          );
-          if (imageElement) {
-            imageElement
-              .closest(".image-wrapper")
-              ?.classList.add("image-loading");
-          }
-
-          img.onload = () => {
-            if (imageElement) {
-              const wrapper = imageElement.closest(".image-wrapper");
-              wrapper?.classList.remove("image-loading");
-              wrapper?.classList.add("image-loaded");
-            }
-            const updatedImage: ImageData = {
-              ...image,
-              widthOrigin: img.width,
-              heightOrigin: img.height,
-            };
-            projectsCache.current.set(image.thumbnailURL, updatedImage);
-            resolve(updatedImage);
-          };
-
-          img.onerror = () => {
-            if (imageElement) {
-              const wrapper = imageElement.closest(".image-wrapper");
-              wrapper?.classList.remove("image-loading");
-              wrapper?.classList.add("image-loaded");
-            }
-            const defaultImage: ImageData = {
-              ...image,
-              widthOrigin: 800,
-              heightOrigin: 600,
-            };
-            projectsCache.current.set(image.thumbnailURL, defaultImage);
-            resolve(defaultImage);
-          };
-        });
-      })
-    );
-
-    return updatedImages;
-  };
-
   const getProjectsDb = async () => {
     try {
       setLoading(true);
@@ -130,14 +113,19 @@ const Projects = () => {
       const projectsData: ImageData[] = [];
       projectsDb.forEach((doc) => {
         const docData = convertToImageData(doc.data());
-        projectsData.push(docData);
+        projectsData.push({
+          id: doc.id,
+          ...docData,
+        });
       });
 
-      const updatedImages = await loadImageDimensions(projectsData);
-      setAllProjects(updatedImages);
+      // Load dimensions for all images
+      const projectsWithDimensions = await Promise.all(
+        projectsData.map(loadImageDimensions)
+      );
 
-      filteredCache.current.clear();
-      filterProjects(updatedImages, currentOption, projectType);
+      setAllProjects(projectsWithDimensions);
+      filterProjects(projectsWithDimensions, currentOption, projectType);
     } catch (error) {
       console.error("Error loading projects:", error);
     } finally {
@@ -145,27 +133,9 @@ const Projects = () => {
     }
   };
 
-  const getFilterCacheKey = (option: number, type: string) => {
-    if (option === 0) return "all";
-    if (option === 4) return "360";
-    if (option === 5) return "animation";
-    return type;
-  };
-
   const filterProjects = useCallback(
     (projects: ImageData[], option: number, type: string) => {
       setFilterLoading(true);
-
-      const cacheKey = getFilterCacheKey(option, type);
-      const cachedResults = filteredCache.current.get(cacheKey);
-
-      if (cachedResults) {
-        setFilteredProjects(cachedResults);
-        setDisplayedProjects(cachedResults.slice(0, BATCH_SIZE));
-        setCurrentPage(1);
-        setFilterLoading(false);
-        return;
-      }
 
       let filtered = [...projects];
 
@@ -178,8 +148,6 @@ const Projects = () => {
       } else if (option >= 1 && option < 4) {
         filtered = filtered.filter((item) => item.type === type);
       }
-
-      filteredCache.current.set(cacheKey, filtered);
 
       setFilteredProjects(filtered);
       setDisplayedProjects(filtered.slice(0, BATCH_SIZE));
@@ -200,30 +168,6 @@ const Projects = () => {
     ]);
     setCurrentPage(nextPage);
   }, [currentPage, filteredProjects]);
-
-  const lastImageRef = useCallback(
-    (node: HTMLDivElement) => {
-      if (loading) return;
-
-      if (observer.current) {
-        observer.current.disconnect();
-      }
-
-      observer.current = new IntersectionObserver((entries) => {
-        if (
-          entries[0].isIntersecting &&
-          displayedProjects.length < filteredProjects.length
-        ) {
-          loadMore();
-        }
-      });
-
-      if (node) {
-        observer.current.observe(node);
-      }
-    },
-    [loading, displayedProjects.length, filteredProjects.length, loadMore]
-  );
 
   useEffect(() => {
     filterProjects(allProjects, currentOption, projectType);
@@ -291,32 +235,68 @@ const Projects = () => {
     setFilterLoading(false);
   };
 
-  const createGalleries = (
-    images: Array<ImageData>,
-    columns: number
-  ): Array<Array<ImageData>> => {
-    const galleries: Array<Array<ImageData>> = Array.from(
-      { length: columns },
-      () => []
+  // Convert projects to photo format for PhotoAlbum
+  const photos: PhotoType[] = displayedProjects.map((item) => ({
+    src: item.thumbnailURL || item.largeURL,
+    width: item.widthOrigin || 800,
+    height: item.heightOrigin || 600,
+    key: item.id || item.name,
+    title: item.name,
+    description: item.description || item.name,
+    alt: item.description || item.name,
+  }));
+
+  // Custom render function for project items
+  const renderPhoto = ({
+    photo,
+    imageProps: { src, alt, style, ...restImageProps },
+  }: {
+    photo: PhotoType;
+    imageProps: React.ImgHTMLAttributes<HTMLImageElement> & {
+      style: React.CSSProperties;
+    };
+  }) => {
+    const projectData = displayedProjects.find((p) => p.name === photo.title);
+
+    return (
+      <div
+        className="relative project-image cursor-pointer overflow-hidden mb-6 group rounded-[4px] shadow-lg transform transition-all duration-500 hover:scale-[1.02]"
+        style={style}
+      >
+        <div
+          onClick={() => navigate(`/project-details/${slugify(photo.title)}`)}
+          className="image-wrapper"
+        >
+          <img
+            src={src}
+            alt={alt}
+            {...restImageProps}
+            className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110"
+          />
+          <div className="project-description absolute inset-0 bg-black/70 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-center items-center p-6 text-white">
+            <h1 className="text-2xl font-medium text-center mb-4 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+              {photo.title}
+            </h1>
+            <div className="flex flex-col items-center space-y-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-100">
+              {projectData?.client && (
+                <p className="text-sm opacity-90">
+                  Client: {projectData.client}
+                </p>
+              )}
+              {projectData?.year && (
+                <p className="text-sm opacity-90">Year: {projectData.year}</p>
+              )}
+              {projectData?.type && (
+                <p className="text-sm opacity-90 capitalize">
+                  Type: {projectData.type}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
     );
-    images.forEach((image: ImageData, index: number) => {
-      galleries[index % columns].push(image);
-    });
-    return galleries;
   };
-
-  let columns = 3;
-
-  if (window.innerWidth > 1280) {
-    columns = 3;
-  } else if (window.innerWidth > 640) {
-    columns = 2;
-  } else {
-    columns = 1;
-  }
-  const galleries = useMemo(() => {
-    return createGalleries(displayedProjects, columns);
-  }, [displayedProjects, columns]);
 
   return (
     <div className="w-screen">
@@ -389,72 +369,109 @@ const Projects = () => {
               </li>
             </ul>
           </div>
-          <div className="grid 2xl:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-x-6  mt-8 animate-fadeIn relative">
+          <div className="mt-8 animate-fadeIn relative">
             {filterLoading && (
               <div className="loading-overlay">
                 <div className="loading-spinner"></div>
               </div>
             )}
-            {galleries.map((column, columnIndex) => (
-              <div
-                key={columnIndex}
-                className="column col-span-1 gallery transform transition-all duration-500"
-              >
-                {column.map((image, imageIndex) => {
-                  const isLastImage =
-                    columnIndex === galleries.length - 1 &&
-                    imageIndex === column.length - 1;
+            <div className="columns-1 sm:columns-2 2xl:columns-3 gap-6 space-y-6">
+              {displayedProjects.map((project, index) => {
+                // Determine if this project should be featured (larger)
+                const isFeatured = index % 5 === 0;
 
-                  return (
+                return (
+                  <div
+                    key={project.id || project.name}
+                    className={`relative project-image cursor-pointer overflow-hidden group rounded-[4px] shadow-lg transform transition-all duration-500 hover:scale-[1.02] break-inside-avoid ${
+                      isFeatured ? "row-span-2" : ""
+                    }`}
+                  >
                     <div
-                      key={imageIndex}
-                      ref={isLastImage ? lastImageRef : null}
-                      className="relative project-image cursor-pointer overflow-hidden mb-6 group rounded-[4px] shadow-lg transform transition-all duration-500 hover:scale-[1.02]"
+                      onClick={() =>
+                        navigate(`/project-details/${slugify(project.name)}`)
+                      }
+                      className={`image-wrapper ${
+                        isFeatured ? "aspect-[3/4]" : "aspect-[4/3]"
+                      }`}
                     >
-                      <Link to={`/project-details/${slugify(image.name)}`}>
-                        <div className="image-wrapper">
-                          <img
-                            loading="lazy"
-                            data-image-url={image.thumbnailURL}
-                            className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110"
-                            src={image.thumbnailURL}
-                            alt={image.description || undefined}
-                          />
+                      <img
+                        src={project.thumbnailURL}
+                        alt={project.description || project.name}
+                        className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110"
+                      />
+                      <div className="project-description absolute inset-0 bg-black/70 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-center items-center p-6 text-white">
+                        <h1
+                          className={`${
+                            isFeatured ? "text-3xl" : "text-2xl"
+                          } font-medium text-center mb-4 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500`}
+                        >
+                          {project.name}
+                        </h1>
+                        <div className="flex flex-col items-center space-y-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-100">
+                          {project.client && (
+                            <p className="text-sm opacity-90">
+                              Client: {project.client}
+                            </p>
+                          )}
+                          {project.year && (
+                            <p className="text-sm opacity-90">
+                              Year: {project.year}
+                            </p>
+                          )}
+                          {project.type && (
+                            <p className="text-sm opacity-90 capitalize">
+                              Type: {project.type}
+                            </p>
+                          )}
                         </div>
-                        <div className="project-description absolute inset-0 bg-black/70 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-center items-center p-6 text-white">
-                          <h1 className="text-2xl font-medium text-center mb-4 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                            {image.name}
-                          </h1>
-                          <div className="flex flex-col items-center space-y-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-100">
-                            {image.client && (
-                              <p className="text-sm opacity-90">
-                                Client: {image.client}
-                              </p>
-                            )}
-                            {image.year && (
-                              <p className="text-sm opacity-90">
-                                Year: {image.year}
-                              </p>
-                            )}
-                            {image.type && (
-                              <p className="text-sm opacity-90 capitalize">
-                                Type: {image.type}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </Link>
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
-            ))}
+                  </div>
+                );
+              })}
+            </div>
             {loading && (
               <div className="col-span-full flex justify-center items-center py-8">
                 <div className="loading-spinner"></div>
               </div>
             )}
+            {displayedProjects.length < filteredProjects.length && (
+              <div className="flex justify-center mt-12">
+                <button
+                  onClick={loadMore}
+                  className="group relative inline-flex items-center gap-2 px-8 py-3 bg-black hover:bg-black/90 transition-all duration-500"
+                >
+                  <span className="relative z-10 text-white text-15 font-light tracking-wider">
+                    Load More Projects
+                  </span>
+                  {/* Arrow Icon */}
+                  <svg
+                    className="w-4 h-4 text-white transition-transform duration-300 group-hover:translate-y-1"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v13m0 0l-5-5m5 5l5-5"
+                    />
+                  </svg>
+                  {/* Animated border */}
+                  <div className="absolute bottom-0 left-0 h-[1px] w-0 bg-white/40 transition-all duration-300 group-hover:w-full" />
+                  <div className="absolute top-0 right-0 h-[1px] w-0 bg-white/40 transition-all duration-300 group-hover:w-full" />
+                  <div className="absolute top-0 left-0 w-[1px] h-0 bg-white/40 transition-all duration-300 group-hover:h-full" />
+                  <div className="absolute bottom-0 right-0 w-[1px] h-0 bg-white/40 transition-all duration-300 group-hover:h-full" />
+                  {/* Hover effect overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-orange-500/0 via-orange-500/0 to-orange-500/0 opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
+                </button>
+              </div>
+            )}
           </div>
+
+          {/* Contact Form Section */}
           <div className="relative bg-black/95 backdrop-blur-sm mt-20 rounded overflow-hidden">
             {/* Decorative elements */}
             <div className="absolute inset-0">

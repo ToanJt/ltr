@@ -1,7 +1,18 @@
+import { useEffect } from "react";
+import type { LoadableComponent } from "../../functions/interface";
 import { InfiniteSlider } from "../../components/motion-primitives/infinite-slider";
 import "../../styles/ourclients.css";
 
-export default function OurClients() {
+const OurClients = ({ onLoad }: LoadableComponent) => {
+  useEffect(() => {
+    // Add a small delay to ensure all assets are loaded
+    const timer = setTimeout(() => {
+      onLoad?.();
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [onLoad]);
+
   return (
     <main className=" mx-auto overflow-hidden container lg:pb-24 pb-10 lg:mt-24 mt-16">
       <div className="flex flex-col items-center lg:mb-24 sm:mb-16 mb-8">
@@ -50,4 +61,6 @@ export default function OurClients() {
       </div>
     </main>
   );
-}
+};
+
+export default OurClients;

@@ -98,3 +98,29 @@ body {
 circle {
   fill: #f7f8fa;
 }
+
+/* Preloader Animations */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(-20px) scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+@keyframes scanline {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.perspective-1000 {
+  perspective: 1000px;
+}

@@ -1,6 +1,17 @@
 import { motion } from "framer-motion";
+import type { LoadableComponent } from "../../functions/interface";
+import { useEffect } from "react";
 
-const CompanyStrengths = () => {
+const CompanyStrengths = ({ onLoad }: LoadableComponent) => {
+  useEffect(() => {
+    // Add a small delay to ensure all assets are loaded
+    const timer = setTimeout(() => {
+      onLoad?.();
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [onLoad]);
+
   const fadeInUp = {
     initial: { y: 30, opacity: 0 },
     animate: { y: 0, opacity: 1 },

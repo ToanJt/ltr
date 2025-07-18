@@ -9,6 +9,7 @@ import { db } from "../../config/firebaseConfig";
 import { TextEffect } from "../motion-primitives/text-effect";
 import { useNavigate } from "react-router-dom";
 import type { Variants } from "framer-motion";
+import type { LoadableComponent } from "../../functions/interface";
 import "../../styles/intro.css";
 
 interface Background {
@@ -23,17 +24,77 @@ interface Background {
 const AUTO_SLIDE_DELAY = 15000;
 const TRANSITION_DURATION = 1000;
 const TEXT_TRIGGER_DELAY = 100;
+const IMAGE_QUALITY = 90; // Chất lượng hình ảnh tối ưu
 
-const BackgroundSlider = () => {
+const BackgroundSlider = ({ onLoad }: LoadableComponent) => {
   const [backgrounds, setBackgrounds] = useState<Background[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [textTrigger, setTextTrigger] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
   const swiperRef = useRef<any>(null);
   const autoSlideRef = useRef<NodeJS.Timeout | null>(null);
+  const imageCache = useRef<Map<string, string>>(new Map());
 
-  // Fetch backgrounds data
+  // Tối ưu URL hình ảnh
+  const optimizeImageUrl = useCallback((url: string) => {
+    if (imageCache.current.has(url)) {
+      return imageCache.current.get(url)!;
+    }
+
+    // Thêm tham số chất lượng vào URL nếu là URL Cloudinary hoặc tương tự
+    if (url.includes("cloudinary.com")) {
+      const optimizedUrl = url.replace(
+        "/upload/",
+        `/upload/q_${IMAGE_QUALITY},f_auto/`
+      );
+      imageCache.current.set(url, optimizedUrl);
+      return optimizedUrl;
+    }
+
+    return url;
+  }, []);
+
+  // Preload images with optimized loading strategy
+  const preloadImage = useCallback(
+    (src: string) => {
+      return new Promise((resolve, reject) => {
+        const optimizedSrc = optimizeImageUrl(src);
+        const img = new Image();
+
+        // Thêm loading="eager" cho ảnh đầu tiên, lazy cho các ảnh còn lại
+        if (backgrounds.length === 0) {
+          img.loading = "eager";
+        } else {
+          img.loading = "lazy";
+        }
+
+        // Thêm fetchpriority cho ảnh đầu tiên
+        if (backgrounds.length === 0) {
+          img.fetchPriority = "high";
+        }
+
+        img.decoding = "async"; // Sử dụng async decoding
+        img.src = optimizedSrc;
+
+        img.onload = () => {
+          setLoadedImages((prev) => {
+            const newSet = new Set(prev).add(src);
+            if (newSet.size === backgrounds.length && onLoad) {
+              onLoad();
+            }
+            return newSet;
+          });
+          resolve(src);
+        };
+        img.onerror = reject;
+      });
+    },
+    [backgrounds.length, onLoad, optimizeImageUrl]
+  );
+
+  // Fetch backgrounds data and preload images
   useEffect(() => {
     const fetchBackgrounds = async () => {
       try {
@@ -43,12 +104,19 @@ const BackgroundSlider = () => {
           ...(doc.data() as Omit<Background, "id">),
         }));
         setBackgrounds(data);
+
+        // Preload first image immediately, then others
+        if (data.length > 0) {
+          await preloadImage(data[0].image);
+          // Preload remaining images
+          Promise.all(data.slice(1).map((bg) => preloadImage(bg.image)));
+        }
       } catch (error) {
         console.error("Error fetching backgrounds:", error);
       }
     };
     fetchBackgrounds();
-  }, []);
+  }, [preloadImage]);
 
   // Reset text trigger with delay
   const resetTextTrigger = useCallback(() => {
@@ -226,14 +294,23 @@ const BackgroundSlider = () => {
               <div className="relative w-full h-full">
                 {/* Background Image with Overlay */}
                 <div
-                  className="absolute inset-0 w-full h-full bg-cover bg-center transform transition-all duration-[2000ms]"
+                  className={`absolute inset-0 w-full h-full bg-cover bg-center transform will-change-transform ${
+                    !loadedImages.has(background.image) ? "bg-gray-900" : ""
+                  }`}
                   style={{
-                    backgroundImage: `url(${background.image})`,
+                    backgroundImage: loadedImages.has(background.image)
+                      ? `url(${optimizeImageUrl(background.image)})`
+                      : undefined,
                     transform:
                       activeIndex === index ? "scale(1)" : "scale(1.1)",
                     opacity: activeIndex === index ? 1 : 0,
                   }}
                 >
+                  {!loadedImages.has(background.image) && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-8 h-8 border-4 border-white/20 border-t-white/80 rounded-full animate-spin"></div>
+                    </div>
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-black/40" />
                 </div>
 

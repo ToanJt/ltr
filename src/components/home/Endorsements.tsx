@@ -9,9 +9,11 @@ import "../../styles/endorsements.css";
 
 import { getDocs, collection } from "firebase/firestore";
 import { db } from "../../config/firebaseConfig";
+import type { LoadableComponent } from "../../functions/interface";
 
-const Endorsements = () => {
+const Endorsements = ({ onLoad }: LoadableComponent) => {
   const [feedbacks, setFeedbacks] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const swiperInstance = useRef<any>(null);
   const modules = [Navigation, Pagination];
 
@@ -26,13 +28,21 @@ const Endorsements = () => {
   };
 
   useEffect(() => {
-    const fetchFeedbacks = async () => {
-      const feedbacksSnapshot = await getDocs(collection(db, "feedbacks"));
-      const feedbacksData = feedbacksSnapshot.docs.map((doc) => doc.data());
-      setFeedbacks(feedbacksData);
+    const getFeedbacksDb = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "feedbacks"));
+        const feedbacksData = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...(doc.data() as any),
+        }));
+        setFeedbacks(feedbacksData);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching feedbacks:", error);
+        setIsLoading(false);
+      }
     };
-
-    fetchFeedbacks();
+    getFeedbacksDb();
 
     const interval = setInterval(() => {
       nextSlide();
@@ -40,6 +50,13 @@ const Endorsements = () => {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Call onLoad only when data is loaded
+  useEffect(() => {
+    if (!isLoading && onLoad) {
+      onLoad();
+    }
+  }, [isLoading, onLoad]);
 
   return (
     <section className="relative bg-black text-white overflow-hidden w-screen">
@@ -67,7 +84,7 @@ const Endorsements = () => {
           className="endorsements-slider"
           pagination={{
             clickable: true,
-            renderBullet: (index, className) => {
+            renderBullet: (className) => {
               return `<span class="${className} custom-bullet"></span>`;
             },
           }}

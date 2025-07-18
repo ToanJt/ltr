@@ -1,16 +1,21 @@
-interface ImageData {
+export interface ImageData {
+  id?: string;
   name: string;
-  largeURL: string;
+  description?: string;
+  client?: string;
+  year?: string;
+  type?: string;
+  size?: string;
+  is360?: boolean;
+  isAnimation?: boolean;
   thumbnailURL: string;
-  widthOrigin: number | null;
-  heightOrigin: number | null;
-  description: string | null;
-  client: string | null;
-  year: number | null;
-  type: string | null;
-  size: string | null;
-  is360: boolean | null;
-  isAnimation: boolean | null;
+  largeURL: string;
+  widthOrigin?: number;
+  heightOrigin?: number;
 }
 
-export type { ImageData };
+// export type { ImageData };
+
+export interface LoadableComponent {
+  onLoad?: () => void;
+}
