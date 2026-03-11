@@ -7,15 +7,12 @@ Sitemap: https://ltrvisuals.com/sitemap.xml
 
 # Prevent crawling of admin areas
 Disallow: /admin/
-Disallow: /private/
 Disallow: /api/
 
 # Allow crawling of important content
-Allow: /projects/
-Allow: /about/
-Allow: /contact/
-Allow: /services/
-Allow: /portfolio/
+Allow: /projects
+Allow: /about
+Allow: /contact
 
 # Crawl-delay directive
 Crawl-delay: 10 

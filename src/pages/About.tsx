@@ -5,6 +5,7 @@ import { onTop } from "../functions/functions";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../config/firebaseConfig";
 import { motion } from "framer-motion";
+import SEO from "../components/SEO";
 
 const About = () => {
   const [teamActive, setTeamActive] = useState(false);
@@ -24,6 +25,11 @@ const About = () => {
 
   return (
     <div className="w-screen">
+      <SEO
+        title="LTR Studio - Leading 3D Visualization & Architectural Design Studio | About Us"
+        description="Learn about LTR Studio's journey in architectural visualization. Founded in 2021, we deliver high-quality 3D rendering services worldwide with our experienced team of artists and architects."
+        url="https://ltrvisuals.com/about"
+      />
       <div className="relative bg-black w-full lg:py-40 md:py-32 py-24 overflow-hidden">
         {/* Decorative elements */}
         <div className="absolute inset-0">

@@ -1,153 +1,123 @@
-import React, { useState, useEffect, useRef } from "react";
-import gsap from "gsap";
+import { useEffect, useState, useRef } from "react";
+import "./Preloader.css";
 
 interface PreloaderProps {
-  isLoading: boolean;
-  onLoadingComplete?: () => void;
+  onComplete?: () => void;
 }
 
-const Preloader = ({ isLoading, onLoadingComplete }: PreloaderProps) => {
-  const [progress, setProgress] = useState(0);
-  const preloaderRef = useRef<HTMLDivElement>(null);
-  const progressBarRef = useRef<HTMLDivElement>(null);
-  const progressTextRef = useRef<HTMLDivElement>(null);
-  const logoRef = useRef<HTMLDivElement>(null);
-  const overlayRef = useRef<HTMLDivElement>(null);
+export default function Preloader({ onComplete }: PreloaderProps) {
+  const [isVisible, setIsVisible] = useState(true);
+  const startTimeRef = useRef<number>(Date.now());
+  const pageLoadedRef = useRef<boolean>(false);
+  const minDisplayTime = 3000; // Minimum 3 seconds to show animation (LTR animation takes ~2.8s)
 
   useEffect(() => {
-    if (!isLoading) return;
+    // Check if page is loaded
+    const checkPageLoad = () => {
+      pageLoadedRef.current = true;
+      // Don't hide immediately - wait for animation to complete
+      checkCanHide();
+    };
 
-    document.body.style.overflow = "hidden";
+    // Check if we can hide preloader
+    const checkCanHide = () => {
+      const elapsed = Date.now() - startTimeRef.current;
+      const hasMinTimeElapsed = elapsed >= minDisplayTime;
 
-    // Initialize GSAP timeline
-    const tl = gsap.timeline();
-
-    // Animate logo appearance
-    tl.fromTo(
-      logoRef.current,
-      {
-        opacity: 0,
-        scale: 0.8,
-      },
-      {
-        opacity: 1,
-        scale: 1,
-        duration: 0.8,
-        ease: "power2.out",
+      if (pageLoadedRef.current && hasMinTimeElapsed) {
+        // Both conditions met: page loaded AND animation completed
+        setTimeout(() => {
+          setIsVisible(false);
+          if (onComplete) {
+            onComplete();
+          }
+        }, 500); // Delay for smooth fade out
+      } else if (pageLoadedRef.current && !hasMinTimeElapsed) {
+        // Page loaded but animation not done yet - wait
+        const remainingTime = minDisplayTime - elapsed;
+        setTimeout(() => {
+          checkCanHide();
+        }, remainingTime);
       }
-    );
+    };
 
-    // Simulate loading progress
-    let currentProgress = 0;
-    const interval = setInterval(() => {
-      currentProgress += Math.random() * 15;
-      if (currentProgress > 100) currentProgress = 100;
-      setProgress(Math.min(currentProgress, 100));
+    // Listen for load event
+    window.addEventListener("load", checkPageLoad);
 
-      if (currentProgress >= 100) {
-        clearInterval(interval);
+    // Also check immediately in case page is already loaded
+    if (document.readyState === "complete") {
+      checkPageLoad();
+    }
 
-        // Final animation sequence
-        const exitTl = gsap.timeline({
-          onComplete: () => {
-            setTimeout(() => {
-              onLoadingComplete?.();
-            }, 200);
-          },
-        });
-
-        // Animate progress bar completion
-        exitTl
-          .to(progressBarRef.current, {
-            width: "100%",
-            duration: 0.5,
-            ease: "power2.inOut",
-          })
-          .to(progressTextRef.current, {
-            y: -20,
-            opacity: 0,
-            duration: 0.4,
-          })
-          .to(
-            logoRef.current,
-            {
-              y: -30,
-              opacity: 0,
-              duration: 0.4,
-            },
-            "<"
-          )
-          .to(overlayRef.current, {
-            y: "-100%",
-            duration: 0.8,
-            ease: "power2.inOut",
-          });
+    // Periodic check to ensure we hide after minimum time even if page loads slowly
+    const hideCheckInterval = setInterval(() => {
+      if (pageLoadedRef.current) {
+        checkCanHide();
       }
-    }, 150);
+    }, 100);
 
     return () => {
-      clearInterval(interval);
-      document.body.style.overflow = "auto";
+      clearInterval(hideCheckInterval);
+      window.removeEventListener("load", checkPageLoad);
     };
-  }, [isLoading, onLoadingComplete]);
+  }, [onComplete, minDisplayTime]);
 
-  if (!isLoading) return null;
+  if (!isVisible) return null;
 
   return (
-    <div
-      ref={preloaderRef}
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black"
-    >
-      <div
-        ref={overlayRef}
-        className="absolute inset-0 bg-gradient-to-br from-black via-neutral-900 to-black"
-      >
-        {/* Animated background lines */}
-        <div className="absolute inset-0 opacity-10">
-          {Array.from({ length: 10 }).map((_, i) => (
-            <div
-              key={i}
-              className="absolute h-px bg-gradient-to-r from-transparent via-white to-transparent"
-              style={{
-                top: `${i * 10}%`,
-                left: 0,
-                right: 0,
-                animation: `scanline ${2 + i * 0.5}s linear infinite`,
-                opacity: 0.1 + i * 0.02,
-              }}
+    <div className={`preloader ${!isVisible ? "preloader--hidden" : ""}`}>
+      <div className="preloader__content">
+        {/* Animated LTR Logo */}
+        <div className="preloader__logo-animation">
+          <svg
+            width="600"
+            height="400"
+            viewBox="0 0 600 400"
+            xmlns="http://www.w3.org/2000/svg"
+            className="preloader__svg"
+          >
+            {/* Chữ L */}
+            <g className="l-left">
+              {/* Thanh dọc */}
+              <rect x="50" y="50" width="40" height="300" />
+              {/* Thanh ngang */}
+              <rect x="50" y="310" width="160" height="40" />
+            </g>
+
+            {/* Chữ L ngược (theo chiều Y-X) */}
+            <g className="l-right">
+              {/* Thanh ngang trên */}
+              <rect x="130" y="50" width="160" height="40" />
+              {/* Thanh dọc */}
+              <rect x="250" y="50" width="40" height="300" />
+            </g>
+
+            {/* Đường cung */}
+            <path
+              className="arc-path"
+              d="M 330 70 L 450 70 Q 570 70, 570 165 Q 570 260, 450 260 L 400 260"
+              stroke="#f15e22"
+              strokeWidth="40"
+              fill="none"
+              strokeLinejoin="round"
             />
-          ))}
+
+            {/* Chân của chữ R (hình bình hành) */}
+            <path
+              className="leg-shape"
+              d="M 429 260 L 471 260 L 511 350 L 469 350 Z"
+              fill="#f15e22"
+            />
+          </svg>
         </div>
 
-        <div className="relative h-full flex flex-col items-center justify-center">
-          {/* Logo */}
-          <div ref={logoRef} className="mb-12 relative">
-            <div className="text-white text-5xl font-bold tracking-wider relative z-10">
-              LTR
-              <div className="absolute -inset-4 bg-white/5 blur-xl rounded-full" />
-            </div>
-          </div>
-
-          {/* Progress Bar */}
-          <div className="w-48 h-[2px] bg-white/10 relative overflow-hidden">
-            <div
-              ref={progressBarRef}
-              className="absolute top-0 left-0 h-full bg-gradient-to-r from-orange-500 to-orange-400"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-
-          {/* Progress Text */}
-          <div
-            ref={progressTextRef}
-            className="mt-4 text-white/70 text-sm font-light tracking-wider"
-          >
-            {Math.round(progress)}%
+        {/* Minimal loading bar */}
+        <div className="preloader__loading-bar-container">
+          <div className="preloader__loading-bar">
+            <div className="preloader__loading-bar-fill"></div>
           </div>
         </div>
       </div>
     </div>
   );
-};
-
-export default Preloader;
+}

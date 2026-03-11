@@ -1,11 +1,10 @@
-import { useState, useEffect } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { useState, useEffect, useRef } from "react";
+import { collection, getDocs, query, limit } from "firebase/firestore";
 import { db } from "../../config/firebaseConfig";
 import { convertToImageData } from "../../functions/functions";
 import type { ImageData } from "../../functions/interface";
 import { useNavigate } from "react-router-dom";
 import { ColumnsPhotoAlbum } from "react-photo-album";
-import { motion } from "framer-motion";
 import "react-photo-album/columns.css";
 import "../../styles/projectsshow.css";
 
@@ -33,13 +32,40 @@ interface PhotoType {
   title: string;
   description: string;
   alt: string;
+  loading?: "lazy" | "eager";
+  fetchPriority?: "high" | "low" | "auto";
+  sizes?: string;
 }
 
 const ProjectsShow = ({ onLoad }: LoadableComponent) => {
   const [projects, setProjects] = useState<ImageData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [shouldLoad, setShouldLoad] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
   const navigate = useNavigate();
   const PROJECT_LIMIT = 21;
+
+  // Intersection Observer to only load when section is near viewport
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !shouldLoad) {
+            setShouldLoad(true);
+          }
+        });
+      },
+      {
+        rootMargin: "200px", // Start loading 200px before section is visible
+      }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [shouldLoad]);
 
   // Load image dimensions
   const loadImageDimensions = async (
@@ -69,20 +95,25 @@ const ProjectsShow = ({ onLoad }: LoadableComponent) => {
   };
 
   useEffect(() => {
+    // Only fetch data when shouldLoad is true
+    if (!shouldLoad) return;
     const getProjectsDb = async () => {
       try {
-        const projectsDb = await getDocs(collection(db, "projects"));
+        // Use Firestore limit() to fetch only needed documents
+        const projectsQuery = query(
+          collection(db, "projects"),
+          limit(PROJECT_LIMIT)
+        );
+        const projectsDb = await getDocs(projectsQuery);
         const projectsData: ImageData[] = [];
 
-        // Get first PROJECT_LIMIT projects
+        // Get all returned projects
         projectsDb.forEach((doc) => {
-          if (projectsData.length < PROJECT_LIMIT) {
-            const docData = convertToImageData(doc.data());
-            projectsData.push({
-              id: doc.id,
-              ...docData,
-            });
-          }
+          const docData = convertToImageData(doc.data());
+          projectsData.push({
+            id: doc.id,
+            ...docData,
+          });
         });
 
         // Load dimensions for all images
@@ -99,7 +130,7 @@ const ProjectsShow = ({ onLoad }: LoadableComponent) => {
     };
 
     getProjectsDb();
-  }, []);
+  }, [shouldLoad]);
 
   // Call onLoad only when data is loaded
   useEffect(() => {
@@ -108,7 +139,100 @@ const ProjectsShow = ({ onLoad }: LoadableComponent) => {
     }
   }, [isLoading, onLoad]);
 
-  const photos: PhotoType[] = projects.map((item) => ({
+  // Preload first critical images only after they start loading
+  useEffect(() => {
+    if (shouldLoad && projects.length > 0) {
+      const preloadCount = Math.min(6, projects.length);
+      for (let i = 0; i < preloadCount; i++) {
+        const link = document.createElement("link");
+        link.rel = "preload";
+        link.as = "image";
+        link.href = projects[i].thumbnailURL || projects[i].largeURL;
+        if (i === 0) {
+          link.setAttribute("fetchpriority", "high");
+        } else if (i < 3) {
+          link.setAttribute("fetchpriority", "high");
+        } else {
+          link.setAttribute("fetchpriority", "low");
+        }
+        // Add imagesizes for responsive images
+        link.setAttribute(
+          "imagesizes",
+          "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+        );
+        document.head.appendChild(link);
+      }
+    }
+  }, [projects, shouldLoad]);
+
+  // Apply image optimization attributes directly to img elements
+  useEffect(() => {
+    if (!isLoading && projects.length > 0) {
+      const applyImageAttributes = () => {
+        const images = document.querySelectorAll(
+          ".react-photo-album--photo img"
+        );
+        images.forEach((img, index) => {
+          const imgElement = img as HTMLImageElement;
+          const project = projects[index];
+
+          if (!project) return;
+
+          // Apply loading attribute
+          if (index < 6) {
+            imgElement.loading = "eager";
+            imgElement.setAttribute(
+              "fetchpriority",
+              index === 0 ? "high" : "high"
+            );
+          } else {
+            imgElement.loading = "lazy";
+            imgElement.setAttribute("fetchpriority", "low");
+          }
+
+          // Apply decoding attribute for better performance
+          imgElement.decoding = "async";
+
+          // Apply sizes attribute for responsive images
+          imgElement.setAttribute(
+            "sizes",
+            "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          );
+
+          // Set width and height to prevent layout shift
+          if (project.widthOrigin && project.heightOrigin) {
+            imgElement.width = project.widthOrigin;
+            imgElement.height = project.heightOrigin;
+            // Set aspect-ratio for modern browsers
+            imgElement.style.aspectRatio = `${project.widthOrigin} / ${project.heightOrigin}`;
+          }
+        });
+      };
+
+      // Apply immediately and also after a short delay to catch dynamically loaded images
+      applyImageAttributes();
+      const timeoutId = setTimeout(applyImageAttributes, 100);
+      const observer = new MutationObserver(() => {
+        applyImageAttributes();
+      });
+
+      // Observe changes in the gallery container
+      const galleryContainer = document.querySelector(".react-photo-album");
+      if (galleryContainer) {
+        observer.observe(galleryContainer, {
+          childList: true,
+          subtree: true,
+        });
+      }
+
+      return () => {
+        clearTimeout(timeoutId);
+        observer.disconnect();
+      };
+    }
+  }, [isLoading, projects]);
+
+  const photos: PhotoType[] = projects.map((item, index) => ({
     src: item.thumbnailURL || item.largeURL,
     width: item.widthOrigin || 800,
     height: item.heightOrigin || 600,
@@ -116,45 +240,39 @@ const ProjectsShow = ({ onLoad }: LoadableComponent) => {
     title: item.name,
     description: item.name || item.name,
     alt: item.name || item.name,
+    // Optimize loading: eager for first 6 images (above the fold), lazy for others
+    loading: index < 6 ? ("eager" as const) : ("lazy" as const),
+    // Set fetch priority: high for first 3, low for others to avoid blocking
+    fetchPriority:
+      index === 0
+        ? ("high" as const)
+        : index < 3
+        ? ("high" as const)
+        : ("low" as const),
+    // Responsive image sizes for better performance
+    sizes: "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw",
   }));
 
   const [index, setIndex] = useState(-1);
 
-  const fadeInUp = {
-    initial: { y: 30, opacity: 0 },
-    animate: { y: 0, opacity: 1 },
-    transition: { duration: 0.5 },
-  };
-
   return (
-    <section className="bg-white relative overflow-hidden">
+    <section ref={sectionRef} className="bg-white relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/5"></div>
       <div className="absolute -top-1/2 -right-1/4 w-96 h-96 bg-main-color/5 rounded-full blur-3xl"></div>
       <div className="absolute -bottom-1/2 -left-1/4 w-96 h-96 bg-main-color/5 rounded-full blur-3xl"></div>
 
       <div className="container mx-auto md:py-24 py-16 lg:px-16 px-8 relative">
-        <motion.div
-          initial="initial"
-          whileInView="animate"
-          viewport={{ once: true }}
-          variants={fadeInUp}
-          className="flex flex-col items-center lg:mb-16 mb-12"
-        >
+        <div className="flex flex-col items-center lg:mb-16 mb-12">
           <p className="uppercase sofia-pro text-15 text-gray-600 tracking-widest sm:mb-5 mb-2">
             Let the Magic Begin!
           </p>
           <h1 className="2xl:text-6xl md:text-5xl text-4xl text-center sofia-medium">
             Our Latest Creations
           </h1>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="relative"
-        >
+        <div className="relative">
           {isLoading ? (
             <div className="flex justify-center items-center min-h-[400px]">
               <div className="loading-spinner"></div>
@@ -192,15 +310,9 @@ const ProjectsShow = ({ onLoad }: LoadableComponent) => {
               />
             </div>
           )}
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="flex justify-center mt-12"
-        >
+        <div className="flex justify-center mt-12">
           <button
             onClick={() => navigate("/projects")}
             className="group relative overflow-hidden rounded-xl 
@@ -250,7 +362,7 @@ const ProjectsShow = ({ onLoad }: LoadableComponent) => {
               />
             </div>
           </button>
-        </motion.div>
+        </div>
       </div>
     </section>
   );

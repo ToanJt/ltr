@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { Icon } from "@iconify/react";
 import { collection, getDocs, doc, setDoc } from "firebase/firestore";
 import { db } from "../config/firebaseConfig";
-import TextParticles from "../threejs/TextParticles";
+// import TextParticles from "../threejs/TextParticles";
 import { Link } from "react-router-dom";
 import Typed from "typed.js";
 import { motion } from "framer-motion";
@@ -108,7 +108,7 @@ const Footer = () => {
   return (
     <div className="relative">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(241,94,34,0.03),transparent_70%)]" />
-      <TextParticles />
+      {/* <TextParticles /> */}
       <footer className="relative bg-black text-white lg:py-24 md:py-16 py-12 overflow-hidden">
         {/* Decorative elements */}
         <div className="absolute inset-0">

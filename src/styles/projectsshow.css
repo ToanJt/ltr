@@ -39,11 +39,26 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  /* Optimize thumbnail images rendering */
+  image-rendering: -webkit-optimize-contrast;
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 .yarl__slide_image {
   width: 90% !important;
   height: 90% !important;
+}
+
+/* Optimize lightbox images */
+.yarl__slide_image img {
+  /* Prevent layout shift */
+  object-fit: contain;
+  /* GPU acceleration */
+  will-change: transform;
+  backface-visibility: hidden;
+  /* Image rendering optimization */
+  image-rendering: -webkit-optimize-contrast;
 }
 
 /* Gallery container */
@@ -68,9 +83,18 @@
   z-index: 1;
 }
 
-/* Image */
+/* Image - Optimized for performance */
 .react-photo-album--photo img {
   transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  /* GPU acceleration */
+  will-change: transform;
+  backface-visibility: hidden;
+  /* Image rendering optimization */
+  image-rendering: -webkit-optimize-contrast;
+  /* Prevent layout shift with aspect ratio */
+  height: auto;
+  /* Content visibility for performance */
+  content-visibility: auto;
 }
 
 .react-photo-album--photo:hover img {

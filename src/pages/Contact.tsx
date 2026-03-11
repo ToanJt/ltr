@@ -4,6 +4,7 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "../config/firebaseConfig";
 import { onTop } from "../functions/functions";
 import "../styles/contact.css";
+import SEO from "../components/SEO";
 
 interface ContactInfo {
   facebookLink: string;
@@ -106,6 +107,11 @@ const Contact = () => {
 
   return (
     <div className="">
+      <SEO
+        title="LTR Studio - Leading 3D Visualization & Architectural Design Studio | Contact Us"
+        description="Get in touch with LTR Studio for professional 3D visualization and architectural design services. Located in Da Nang, Vietnam, we're ready to bring your vision to life."
+        url="https://ltrvisuals.com/contact"
+      />
       <div className="bg-black">
         <div className="relative">
           <div className="w-screen relative lg:h-[400px] md:h-[350px] h-[300px] overflow-hidden">

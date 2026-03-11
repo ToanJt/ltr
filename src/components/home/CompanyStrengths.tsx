@@ -12,12 +12,6 @@ const CompanyStrengths = ({ onLoad }: LoadableComponent) => {
     return () => clearTimeout(timer);
   }, [onLoad]);
 
-  const fadeInUp = {
-    initial: { y: 30, opacity: 0 },
-    animate: { y: 0, opacity: 1 },
-    transition: { duration: 0.5 },
-  };
-
   return (
     <section className="bg-vr-light-gray relative overflow-hidden">
       {/* Background decoration */}
@@ -26,17 +20,11 @@ const CompanyStrengths = ({ onLoad }: LoadableComponent) => {
       <div className="absolute -bottom-1/2 -left-1/4 w-96 h-96 bg-main-color/5 rounded-full blur-3xl"></div>
 
       <div className="container mx-auto md:pb-32 pb-16 lg:px-16 px-8 relative">
-        <motion.div
-          initial="initial"
-          whileInView="animate"
-          viewport={{ once: true }}
-          variants={fadeInUp}
-          className="flex flex-col items-center lg:mb-16 mb-12"
-        >
+        <div className="flex flex-col items-center lg:mb-16 mb-12">
           <h1 className="2xl:text-6xl md:text-5xl text-4xl text-center sofia-medium">
             Our Core Strengths Driving Success
           </h1>
-        </motion.div>
+        </div>
 
         <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 xl:gap-8 gap-6 2xl:mx-20">
           {strengths.map((strength, index) => (

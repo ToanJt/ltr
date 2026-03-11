@@ -1,7 +1,27 @@
+let textParticlesEnvironment = null;
+
 const preload = () => {
+  // Check if element exists
+  const container = document.querySelector("#magic");
+  if (!container) {
+    // Element not ready, try again later
+    setTimeout(preload, 100);
+    return;
+  }
+
+  // Check if already initialized
+  if (textParticlesEnvironment) {
+    return;
+  }
+
   let manager = new THREE.LoadingManager();
   manager.onLoad = function () {
     const environment = new Environment(typo, particle);
+    textParticlesEnvironment = environment;
+    // Store in window for component access
+    if (typeof window !== "undefined") {
+      window.textParticlesEnv = environment;
+    }
   };
 
   var typo = null;
@@ -17,12 +37,29 @@ const preload = () => {
   );
 };
 
+// Export preload function for manual initialization
+if (typeof window !== "undefined") {
+  window.initTextParticles = preload;
+}
+
+// Auto-initialize if Three.js is ready and DOM is ready
+const tryInit = () => {
+  if (typeof window !== "undefined" && window.THREE) {
 if (
   document.readyState === "complete" ||
   (document.readyState !== "loading" && !document.documentElement.doScroll)
-)
+    ) {
   preload();
-else document.addEventListener("DOMContentLoaded", preload);
+    } else {
+      document.addEventListener("DOMContentLoaded", preload);
+    }
+  } else {
+    // Wait for Three.js
+    setTimeout(tryInit, 100);
+  }
+};
+
+tryInit();
 
 class Environment {
   constructor(font, particle) {

@@ -21,6 +21,7 @@ const Header = () => {
     instagramLink: "",
     whatsappLink: "",
   });
+  const hasInitializedRef = useState(false)[0];
 
   const location = useLocation();
 
@@ -80,22 +81,39 @@ const Header = () => {
     }
   }, [isActiveNavbar]);
 
+  // Defer Firebase fetch to not block LCP
   useEffect(() => {
-    const fetchInfo = async () => {
-      const snapshot = await getDocs(collection(db, "contacts"));
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        setInfo({
-          email: data.email,
-          facebookLink: data.facebook,
-          instagramLink: data.instagram,
-          whatsappLink: data.whatsapp,
-        });
-      });
+    if (hasInitializedRef) return;
+
+    const initializeHeader = () => {
+      const fetchInfo = async () => {
+        try {
+          const snapshot = await getDocs(collection(db, "contacts"));
+          snapshot.forEach((doc) => {
+            const data = doc.data();
+            setInfo({
+              email: data.email,
+              facebookLink: data.facebook,
+              instagramLink: data.instagram,
+              whatsappLink: data.whatsapp,
+            });
+          });
+        } catch (error) {
+          console.error("Error fetching header info:", error);
+        }
+      };
+
+      fetchInfo();
+      setDefaultAnimation();
     };
-    fetchInfo();
-    setDefaultAnimation();
-  }, []);
+
+    // Defer initialization using requestIdleCallback
+    if ("requestIdleCallback" in window) {
+      requestIdleCallback(initializeHeader);
+    } else {
+      setTimeout(initializeHeader, 1000);
+    }
+  }, [hasInitializedRef]);
 
   return (
     <div className="relative">

@@ -4,26 +4,26 @@
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
         http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
   <url>
-    <loc>https://www.ltrvisuals.com/</loc>
-    <lastmod>2024-03-20T00:00:00+00:00</lastmod>
+    <loc>https://ltrvisuals.com/</loc>
+    <lastmod>2024-03-25T00:00:00+00:00</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.00</priority>
   </url>
   <url>
-    <loc>https://www.ltrvisuals.com/projects</loc>
-    <lastmod>2024-03-20T00:00:00+00:00</lastmod>
+    <loc>https://ltrvisuals.com/projects</loc>
+    <lastmod>2024-03-25T00:00:00+00:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.80</priority>
   </url>
   <url>
-    <loc>https://www.ltrvisuals.com/about</loc>
-    <lastmod>2024-03-20T00:00:00+00:00</lastmod>
+    <loc>https://ltrvisuals.com/about</loc>
+    <lastmod>2024-03-25T00:00:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.80</priority>
   </url>
   <url>
-    <loc>https://www.ltrvisuals.com/contact</loc>
-    <lastmod>2024-03-20T00:00:00+00:00</lastmod>
+    <loc>https://ltrvisuals.com/contact</loc>
+    <lastmod>2024-03-25T00:00:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.80</priority>
   </url>

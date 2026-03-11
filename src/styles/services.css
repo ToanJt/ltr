@@ -1,94 +1,92 @@
+/* Performance optimizations */
 .service-box {
-  opacity: 0;
-  transform: translateY(30px);
-  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
+  /* GPU acceleration */
+  transform: translateZ(0);
+  will-change: transform, box-shadow;
+  backface-visibility: hidden;
+  -webkit-font-smoothing: subpixel-antialiased;
 
-.service-animate {
-  opacity: 1;
-  transform: translateY(0);
-}
+  /* Layout containment for better performance */
+  contain: layout style paint;
 
-.service-box:nth-child(1) {
-  transition-delay: 0.1s;
-}
+  /* Smooth transitions using transform for better performance */
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-.service-box:nth-child(2) {
-  transition-delay: 0.2s;
-}
-
-.service-box:nth-child(3) {
-  transition-delay: 0.3s;
-}
-
-.service-box:nth-child(4) {
-  transition-delay: 0.4s;
-}
-
-/* Card container effects */
-.service-box {
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  transform: scale(1);
 }
 
 .service-box:hover {
-  transform: scale(1.02);
+  transform: translateY(-4px) translateZ(0);
   box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.2),
     0 8px 10px -6px rgb(0 0 0 / 0.2);
 }
 
-/* Image and overlay effects */
+/* Card container - background color moved to CSS */
+.service-box .service-card-container {
+  background-color: #e5e7eb;
+}
+
+/* Image container - optimized for performance */
 .service-box .image-container {
   overflow: hidden;
+  /* GPU acceleration */
   transform: translateZ(0);
+  will-change: transform;
   backface-visibility: hidden;
+  /* Prevent layout shifts */
+  contain: strict;
 }
 
 .service-box img {
-  transform: scale(1.01);
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+  /* Smooth image scaling on hover */
   transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
   backface-visibility: hidden;
+  /* Prevent image from causing repaints */
   -webkit-font-smoothing: subpixel-antialiased;
 }
 
 .service-box:hover img {
-  transform: scale(1.15);
+  transform: scale(1.1) translateZ(0);
 }
 
+/* Overlay - optimized with GPU acceleration - darker for better contrast */
 .service-box .overlay {
   background: linear-gradient(
     to bottom,
-    rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 0.2) 20%,
-    rgba(0, 0, 0, 0.8) 100%
+    rgba(0, 0, 0, 0.1) 0%,
+    rgba(0, 0, 0, 0.4) 20%,
+    rgba(0, 0, 0, 0.9) 100%
   );
-  opacity: 0.85;
+  opacity: 0.99;
   transition: opacity 0.3s ease;
+  /* GPU acceleration */
+  transform: translateZ(0);
+  will-change: opacity;
 }
 
 .service-box:hover .overlay {
-  opacity: 0.95;
-}
-
-/* Content animation */
-.service-box .content {
-  transform: translateY(10px);
-  opacity: 0.9;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.service-box:hover .content {
-  transform: translateY(0);
   opacity: 1;
 }
 
-/* Stats and description fade in */
+/* Content - smooth fade effect */
+.service-box .content {
+  opacity: 1;
+  /* GPU acceleration */
+  transform: translateZ(0);
+  will-change: transform, opacity;
+}
+
+/* Description - hidden by default, shown on hover */
 .service-box .description {
   opacity: 0;
   transform: translateY(10px);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  transition-delay: 0.05s;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  will-change: opacity, transform;
 }
 
 .service-box:hover .description {
@@ -96,25 +94,52 @@
   transform: translateY(0);
 }
 
-/* Button effects */
+/* Button - optimized transitions */
 .service-box .btn {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Use transform for better performance */
+  transition: background-color 0.25s ease, border-color 0.25s ease,
+    transform 0.25s ease;
+  /* GPU acceleration */
+  transform: translateZ(0);
+  will-change: background-color, border-color, transform;
 }
 
 .service-box .btn:hover {
   background: #f15e22;
   border-color: #f15e22;
-  transform: translateY(-2px);
+  transform: translateY(-2px) translateZ(0);
   cursor: pointer;
 }
 
-@media screen and (max-width: 640px) {
-  .service-box .description {
-    opacity: 1;
+.service-box .btn:active {
+  transform: translateY(0) translateZ(0);
+}
+
+/* Responsive optimizations */
+@media (prefers-reduced-motion: reduce) {
+  .service-box,
+  .service-box img,
+  .service-box .overlay,
+  .service-box .btn {
+    transition: none;
+  }
+
+  .service-box:hover {
     transform: none;
+  }
+
+  .service-box:hover img {
+    transform: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .service-box .overlay {
+    opacity: 0.95;
   }
 }

@@ -9,6 +9,7 @@
     url("../europa/europa-bold-webfont.svg#europabold") format("svg");
   font-weight: normal;
   font-style: normal;
+  font-display: swap;
 }
 @font-face {
   font-family: "Europa Light";
@@ -21,6 +22,7 @@
     url("../europa/europa-light-webfont.svg#europalight") format("svg");
   font-weight: normal;
   font-style: normal;
+  font-display: swap;
 }
 @font-face {
   font-family: "Europa Regular";
@@ -33,4 +35,5 @@
     url("../europa/europa-regular-webfont.svg#europaregular") format("svg");
   font-weight: normal;
   font-style: normal;
+  font-display: swap;
 }
